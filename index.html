@@ -9,15 +9,16 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>JARVIS Météo</title>
 <style>
-:root{--c:#27d7ff;--dim:#0f5a72;--glow:rgba(39,215,255,.35)}
+:root{--c:#27d7ff;--dim:#0f5a72;--glow:rgba(39,215,255,.35);--pbg:rgba(2,20,30,.6);--lbl:#02141d;--bg:radial-gradient(circle at 50% 20%,#082a3d,#02070d 75%)}
+body.day{--c:#0a5275;--dim:#5aa3c4;--glow:rgba(10,82,117,.25);--pbg:rgba(255,255,255,.45);--lbl:#dcefF8;--bg:radial-gradient(circle at 50% 20%,#ffffff,#b9e3f5 80%)}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:radial-gradient(circle at 50% 20%,#082a3d,#02070d 75%);color:var(--c);font-family:"Segoe UI",Roboto,Arial,sans-serif;overflow:hidden}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--c);font-family:"Segoe UI",Roboto,Arial,sans-serif;overflow:hidden}
 #app{height:100%;display:grid;grid-template-rows:auto 1.5fr 1fr 1.2fr auto;gap:8px;padding:10px 14px}
 header{display:flex;justify-content:space-between;align-items:center;font-size:clamp(12px,1.6vh,16px);letter-spacing:1px;border-bottom:1px solid var(--dim);padding-bottom:4px}
 header b{font-weight:600}
 #gear{background:none;border:1px solid var(--dim);color:var(--c);border-radius:6px;padding:2px 10px;cursor:pointer;font:inherit}
-.panel{position:relative;border:1px solid var(--dim);background:rgba(2,20,30,.6);padding:14px 16px 10px;min-height:0;overflow:hidden;box-shadow:inset 0 0 22px rgba(39,215,255,.07)}
-.panel::before{content:attr(data-t);position:absolute;top:-1px;left:12px;transform:translateY(-50%);background:#02141d;padding:0 6px;font-size:clamp(10px,1.3vh,13px);letter-spacing:3px;opacity:.85}
+.panel{position:relative;border:1px solid var(--dim);background:var(--pbg);padding:14px 16px 10px;min-height:0;overflow:hidden;box-shadow:inset 0 0 22px rgba(39,215,255,.07)}
+.panel::before{content:attr(data-t);position:absolute;top:-1px;left:12px;transform:translateY(-50%);background:var(--lbl);padding:0 6px;font-size:clamp(10px,1.3vh,13px);letter-spacing:3px;opacity:.85}
 .row1{display:grid;grid-template-columns:1.2fr 1fr;gap:8px;min-height:0}
 #clock{font-size:clamp(48px,11vh,110px);font-weight:300;line-height:1;text-shadow:0 0 14px var(--glow)}
 #date{font-size:clamp(14px,2.6vh,24px);margin-top:4px}
@@ -51,6 +52,8 @@ input,button{font:inherit;background:#021c28;color:var(--c);border:1px solid var
 button{cursor:pointer}
 .srow{display:flex;gap:8px;margin:8px 0}
 .srow input{flex:1;min-width:0}
+.srow select{font:inherit;background:#021c28;color:var(--c);border:1px solid var(--c);border-radius:6px;padding:8px 10px;flex:1}
+body.day .srow select,body.day input,body.day button{background:#fff;color:#0a5275}
 #results button{display:block;width:100%;text-align:left;margin:4px 0}
 </style>
 </head>
@@ -119,6 +122,13 @@ button{cursor:pointer}
       <input id="cityIn" placeholder="Nom de la ville">
       <button id="searchBtn">Rechercher</button>
     </div>
+    <div class="srow">
+      <select id="themeSel">
+        <option value="auto">Thème : automatique (jour/nuit)</option>
+        <option value="day">Thème : jour</option>
+        <option value="night">Thème : nuit</option>
+      </select>
+    </div>
     <div id="results"></div>
     <div class="srow"><button id="closeBtn">Fermer</button></div>
   </div>
@@ -128,6 +138,8 @@ button{cursor:pointer}
 const DEF = {name:'Graulhet', lat:43.7667, lon:2.0};
 let cfg = DEF;
 try { cfg = JSON.parse(localStorage.getItem('jm')) || DEF; } catch(e) {}
+if (!cfg.theme) cfg.theme = 'auto';
+let last = null; // dernières données reçues (pour le mode auto)
 
 const $ = id => document.getElementById(id);
 const CODES = {0:'Ciel dégagé',1:'Peu nuageux',2:'Partiellement nuageux',3:'Couvert',45:'Brouillard',48:'Brouillard givrant',51:'Bruine faible',53:'Bruine',55:'Bruine forte',56:'Bruine verglaçante',57:'Bruine verglaçante forte',61:'Pluie faible',63:'Pluie',65:'Pluie forte',66:'Pluie verglaçante',67:'Pluie verglaçante forte',71:'Neige faible',73:'Neige',75:'Neige forte',77:'Grains de neige',80:'Averses faibles',81:'Averses',82:'Averses violentes',85:'Averses de neige',86:'Fortes averses de neige',95:'Orage',96:'Orage avec grêle',99:'Orage violent'};
@@ -180,6 +192,7 @@ function tick(){
   $('clock').textContent = d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
   $('date').textContent = d.toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
   $('week').textContent = 'SEMAINE ' + isoWeek(d);
+  if (cfg.theme === 'auto' && last) applyTheme();
   const m = moon(d);
   $('moonName').textContent = m.name;
   $('moonIll').textContent = m.ill + '% éclairée';
@@ -189,9 +202,25 @@ setInterval(tick, 1000); tick();
 
 function hhmm(s){ return s ? s.slice(11, 16) : '--'; }
 
+// Jour/nuit : mode imposé, ou automatique selon lever/coucher du soleil
+function isDayNow(j){
+  if (cfg.theme === 'day') return true;
+  if (cfg.theme === 'night') return false;
+  if (!j) return true;
+  const c = j.current.time, rise = j.daily.sunrise[0], set = j.daily.sunset[0];
+  return c >= rise && c < set;
+}
+function applyTheme(){
+  const day = last ? isDayNow(last.j) : true;
+  document.body.classList.toggle('day', day);
+  $('themeSel').value = cfg.theme;
+}
+
 function render(j, aq){
+  last = {j, aq};
   const c = j.current;
-  const day = c.is_day !== 0;
+  const day = isDayNow(j);
+  applyTheme();
   $('city').textContent = cfg.name.toUpperCase();
   $('mainIcon').innerHTML = icon(c.weather_code, day);
   $('mainTemp').textContent = Math.round(c.temperature_2m) + '°';
@@ -294,7 +323,7 @@ async function search(){
       const b = document.createElement('button');
       b.textContent = `${p.name} (${p.admin1 || ''}, ${p.country || ''})`;
       b.onclick = () => {
-        cfg = {name: p.name, lat: p.latitude, lon: p.longitude};
+        cfg = {name: p.name, lat: p.latitude, lon: p.longitude, theme: cfg.theme};
         try { localStorage.setItem('jm', JSON.stringify(cfg)); } catch(e) {}
         closeSet();
         load();
@@ -306,6 +335,11 @@ async function search(){
   }
 }
 
+$('themeSel').onchange = e => {
+  cfg.theme = e.target.value;
+  try { localStorage.setItem('jm', JSON.stringify(cfg)); } catch(_) {}
+  applyTheme();
+};
 $('gear').onclick = openSet;
 $('searchBtn').onclick = search;
 $('closeBtn').onclick = closeSet;
