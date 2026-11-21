@@ -9,81 +9,118 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>JARVIS Météo</title>
 <style>
-:root{--c:#27d7ff;--dim:#0b4a5e;}
+:root{--c:#27d7ff;--dim:#0f5a72;--glow:rgba(39,215,255,.35)}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:radial-gradient(circle at 50% 30%,#06263a,#02070d 70%);color:var(--c);font-family:"Segoe UI",Roboto,Arial,sans-serif;overflow:hidden}
-#app{display:flex;flex-direction:column;gap:10px;height:100%;padding:12px}
-#top{display:flex;gap:10px;flex:1;min-height:0}
-#top>.panel{flex:1;min-width:0}
-.panel{border:1px solid var(--dim);border-radius:8px;padding:10px 14px;background:rgba(2,20,30,.55);box-shadow:inset 0 0 18px rgba(39,215,255,.08)}
-.label{font-size:12px;letter-spacing:3px;opacity:.7;text-transform:uppercase}
-#clock{font-size:64px;font-weight:300;line-height:1}
-#date{font-size:16px;opacity:.8;margin-top:4px}
-#sun{font-size:15px;margin-top:10px}
-#now{display:flex;align-items:center;gap:16px;margin-top:6px}
-#temp{font-size:72px;font-weight:200;line-height:1}
-#desc{font-size:20px}
-#details{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;font-size:15px}
-#bars{display:flex;align-items:flex-end;gap:4px;height:56px;margin-top:6px}
-.bar{flex:1;background:linear-gradient(#27d7ff,#0b4a5e);min-height:3px;border-radius:2px}
-#rainTxt{font-size:14px;margin-top:4px}
-#week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
-.day{text-align:center;font-size:13px}
-.day b{display:block;font-size:13px;opacity:.85}
-#foot{display:flex;justify-content:space-between;align-items:center;font-size:12px;opacity:.6}
-#gear{background:none;border:1px solid var(--dim);color:var(--c);border-radius:6px;padding:4px 10px;cursor:pointer}
+html,body{margin:0;height:100%;background:radial-gradient(circle at 50% 20%,#082a3d,#02070d 75%);color:var(--c);font-family:"Segoe UI",Roboto,Arial,sans-serif;overflow:hidden}
+#app{height:100%;display:grid;grid-template-rows:auto 1.5fr 1fr 1.2fr auto;gap:8px;padding:10px 14px}
+header{display:flex;justify-content:space-between;align-items:center;font-size:clamp(12px,1.6vh,16px);letter-spacing:1px;border-bottom:1px solid var(--dim);padding-bottom:4px}
+header b{font-weight:600}
+#gear{background:none;border:1px solid var(--dim);color:var(--c);border-radius:6px;padding:2px 10px;cursor:pointer;font:inherit}
+.panel{position:relative;border:1px solid var(--dim);background:rgba(2,20,30,.6);padding:14px 16px 10px;min-height:0;overflow:hidden;box-shadow:inset 0 0 22px rgba(39,215,255,.07)}
+.panel::before{content:attr(data-t);position:absolute;top:-1px;left:12px;transform:translateY(-50%);background:#02141d;padding:0 6px;font-size:clamp(10px,1.3vh,13px);letter-spacing:3px;opacity:.85}
+.row1{display:grid;grid-template-columns:1.2fr 1fr;gap:8px;min-height:0}
+#clock{font-size:clamp(48px,11vh,110px);font-weight:300;line-height:1;text-shadow:0 0 14px var(--glow)}
+#date{font-size:clamp(14px,2.6vh,24px);margin-top:4px}
+#week{font-size:clamp(11px,1.7vh,15px);opacity:.7;margin-top:2px}
+#mainWrap{display:flex;gap:18px;align-items:center;height:100%}
+#mainTemp{font-size:clamp(48px,11vh,100px);font-weight:200;line-height:1;text-shadow:0 0 14px var(--glow)}
+#mainDesc{font-size:clamp(16px,3vh,26px)}
+.kv{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px 14px;font-size:clamp(12px,2vh,17px);margin-top:8px}
+.kv small{display:block;font-size:.7em;opacity:.65;letter-spacing:1px}
+#rainNow{position:absolute;left:16px;right:16px;bottom:8px;font-size:clamp(12px,2vh,16px)}
+.hours{display:grid;grid-template-columns:repeat(16,1fr);gap:4px;height:100%;align-items:center;text-align:center}
+.hours div{font-size:clamp(11px,1.9vh,15px)}
+.hours .h{opacity:.8}
+.hours .t{font-size:clamp(14px,2.6vh,20px);font-weight:600;margin:2px 0}
+.hours .p{font-size:clamp(10px,1.6vh,13px);opacity:.75}
+.row3{display:grid;grid-template-columns:2.6fr 1.2fr 1.2fr;gap:8px;min-height:0}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;height:100%;text-align:center;align-items:center}
+.days div{font-size:clamp(11px,1.8vh,15px);line-height:1.35}
+.days .d{font-weight:600;opacity:.9}
+.days .m{font-size:clamp(14px,2.4vh,20px);font-weight:600}
+.big{font-size:clamp(20px,4vh,36px);font-weight:300}
+.line{font-size:clamp(11px,1.9vh,15px);line-height:1.6}
+svg{stroke:var(--c);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.ico{width:clamp(28px,5vh,44px);height:clamp(28px,5vh,44px);flex:none}
+.days .ico,.hours .ico{margin:0 auto}
+footer{font-size:clamp(10px,1.5vh,13px);opacity:.6;display:flex;justify-content:space-between}
 #settings{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center}
 #settings.open{display:flex}
 #settings .panel{width:min(520px,92%)}
 input,button{font:inherit;background:#021c28;color:var(--c);border:1px solid var(--c);border-radius:6px;padding:8px 10px}
 button{cursor:pointer}
-.row{display:flex;gap:8px;margin:8px 0}
-.row input{flex:1;min-width:0}
+.srow{display:flex;gap:8px;margin:8px 0}
+.srow input{flex:1;min-width:0}
 #results button{display:block;width:100%;text-align:left;margin:4px 0}
 </style>
 </head>
 <body>
 <div id="app">
-  <div id="top">
-    <div class="panel">
+  <header>
+    <div><b id="city">GRAULHET</b> &nbsp;|&nbsp; Météo</div>
+    <div><span id="status"></span> &nbsp;<button id="gear" title="Paramètres (touche P)">Paramètres</button></div>
+  </header>
+
+  <div class="row1">
+    <div class="panel" data-t="HEURE LOCALE">
       <div id="clock">--:--</div>
       <div id="date"></div>
-      <div id="sun"></div>
+      <div id="week"></div>
     </div>
-    <div class="panel">
-      <div class="label" id="city">Ville</div>
-      <div id="now">
-        <div id="temp">--°</div>
+    <div class="panel" data-t="MÉTÉO ACTUELLE">
+      <div id="mainWrap">
+        <div id="mainIcon"></div>
         <div>
-          <div id="desc"></div>
-          <div id="details"></div>
+          <div id="mainTemp">--°</div>
+          <div id="mainDesc"></div>
         </div>
       </div>
+      <div class="kv">
+        <div><small>RESSENTI</small><span id="feels">--</span></div>
+        <div><small>HUMIDITÉ</small><span id="hum">--</span></div>
+        <div><small>VENT</small><span id="wind">--</span></div>
+        <div><small>RAFALES</small><span id="gust">--</span></div>
+        <div><small>UV</small><span id="uv">--</span></div>
+        <div><small>PRESSION</small><span id="press">--</span></div>
+      </div>
+      <div id="rainNow"></div>
     </div>
   </div>
-  <div class="panel">
-    <div class="label">Pluie dans les 6 prochaines heures</div>
-    <div id="bars"></div>
-    <div id="rainTxt"></div>
+
+  <div class="panel" data-t="PROCHAINES HEURES">
+    <div class="hours" id="hours"></div>
   </div>
-  <div class="panel">
-    <div id="week"></div>
+
+  <div class="row3">
+    <div class="panel" data-t="7 JOURS">
+      <div class="days" id="days"></div>
+    </div>
+    <div class="panel" data-t="SOLEIL · LUNE">
+      <div class="line">Lever <span id="sunrise">--</span> &nbsp; Coucher <span id="sunset">--</span></div>
+      <div class="line">Durée du jour <span id="dayLen">--</span></div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:6px">
+        <div id="moonIcon" style="width:40px;height:40px"></div>
+        <div class="line"><span id="moonName"></span><br><span id="moonIll"></span></div>
+      </div>
+    </div>
+    <div class="panel" data-t="QUALITÉ DE L'AIR">
+      <div class="big" id="aqi">--</div>
+      <div class="line" id="aqiLabel"></div>
+      <div class="line" id="aqiDetail" style="opacity:.8"></div>
+    </div>
   </div>
-  <div id="foot">
-    <span id="status"></span>
-    <button id="gear" title="Paramètres (touche P)">Paramètres</button>
-  </div>
+
+  <footer><span id="upd"></span><span>Données : Open-Meteo</span></footer>
 </div>
 
 <div id="settings">
-  <div class="panel">
-    <div class="label">Ville</div>
-    <div class="row">
+  <div class="panel" data-t="VILLE">
+    <div class="srow">
       <input id="cityIn" placeholder="Nom de la ville">
       <button id="searchBtn">Rechercher</button>
     </div>
     <div id="results"></div>
-    <div class="row"><button id="closeBtn">Fermer</button></div>
+    <div class="srow"><button id="closeBtn">Fermer</button></div>
   </div>
 </div>
 
@@ -96,61 +133,143 @@ const $ = id => document.getElementById(id);
 const CODES = {0:'Ciel dégagé',1:'Peu nuageux',2:'Partiellement nuageux',3:'Couvert',45:'Brouillard',48:'Brouillard givrant',51:'Bruine faible',53:'Bruine',55:'Bruine forte',56:'Bruine verglaçante',57:'Bruine verglaçante forte',61:'Pluie faible',63:'Pluie',65:'Pluie forte',66:'Pluie verglaçante',67:'Pluie verglaçante forte',71:'Neige faible',73:'Neige',75:'Neige forte',77:'Grains de neige',80:'Averses faibles',81:'Averses',82:'Averses violentes',85:'Averses de neige',86:'Fortes averses de neige',95:'Orage',96:'Orage avec grêle',99:'Orage violent'};
 const desc = c => CODES[c] || 'Inconnu';
 const DAYS = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const CARD = ['N','NE','E','SE','S','SO','O','NO'];
+
+// Icônes SVG (trait)
+function icon(code, day=true){
+  const sun = day ? `<circle cx="24" cy="24" r="8"/><path d="M24 6v6M24 36v6M6 24h6M36 24h6M11.6 11.6l4.2 4.2M32.2 32.2l4.2 4.2M11.6 36.4l4.2-4.2M32.2 15.8l4.2-4.2"/>`
+                 : `<path d="M30 10a14 14 0 1 0 8 22 11 11 0 0 1-8-22z"/>`;
+  const cloud = `<path d="M18 44h26a9 9 0 0 0 0-18 12 12 0 0 0-23 3 8 8 0 0 0-3 15z"/>`;
+  let body;
+  if (code === 0) body = sun;
+  else if (code <= 2) body = sun + cloud;
+  else if (code === 3) body = cloud;
+  else if (code === 45 || code === 48) body = `<path d="M10 26h28M14 34h24M10 42h28"/>`;
+  else if (code >= 51 && code <= 67 || code >= 80 && code <= 82) body = cloud + `<path d="M20 50l-2 6M30 50l-2 6M40 50l-2 6"/>`;
+  else if (code >= 71 && code <= 86) body = cloud + `<circle cx="20" cy="54" r="1.5"/><circle cx="30" cy="54" r="1.5"/><circle cx="40" cy="54" r="1.5"/>`;
+  else body = cloud + `<path d="M30 40l-6 9h7l-5 9"/>`;
+  return `<svg class="ico" viewBox="0 0 64 64">${body}</svg>`;
+}
+
+function isoWeek(d){
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const n = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - n);
+  const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  return Math.ceil(((t - y0) / 86400000 + 1) / 7);
+}
+
+function moon(d){
+  const ref = Date.UTC(2000, 0, 6, 18, 14);
+  const age = ((d - ref) / 86400000) % 29.530588853;
+  const p = (age < 0 ? age + 29.530588853 : age) / 29.530588853;
+  const ill = Math.round((1 - Math.cos(2 * Math.PI * p)) / 2 * 100);
+  let name;
+  if (p < 0.03 || p > 0.97) name = 'Nouvelle lune';
+  else if (p < 0.22) name = 'Croissant croissant';
+  else if (p < 0.28) name = 'Premier quartier';
+  else if (p < 0.47) name = 'Gibbeuse croissante';
+  else if (p < 0.53) name = 'Pleine lune';
+  else if (p < 0.72) name = 'Gibbeuse décroissante';
+  else if (p < 0.78) name = 'Dernier quartier';
+  else name = 'Croissant décroissant';
+  return {name, ill, p};
+}
 
 function tick(){
   const d = new Date();
   $('clock').textContent = d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
-  $('date').textContent = d.toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long'});
+  $('date').textContent = d.toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  $('week').textContent = 'SEMAINE ' + isoWeek(d);
+  const m = moon(d);
+  $('moonName').textContent = m.name;
+  $('moonIll').textContent = m.ill + '% éclairée';
+  $('moonIcon').innerHTML = `<svg viewBox="0 0 48 48" style="width:100%;height:100%"><circle cx="24" cy="24" r="20" style="fill:rgba(39,215,255,${(m.ill / 100).toFixed(2)})"/></svg>`;
 }
 setInterval(tick, 1000); tick();
 
-function render(j){
+function hhmm(s){ return s ? s.slice(11, 16) : '--'; }
+
+function render(j, aq){
   const c = j.current;
+  const day = c.is_day !== 0;
   $('city').textContent = cfg.name.toUpperCase();
-  $('temp').textContent = Math.round(c.temperature_2m) + '°';
-  $('desc').textContent = desc(c.weather_code);
-  $('details').innerHTML =
-    `<div>Ressenti ${Math.round(c.apparent_temperature)}°</div>` +
-    `<div>Humidité ${c.relative_humidity_2m}%</div>` +
-    `<div>Vent ${Math.round(c.wind_speed_10m)} km/h</div>` +
-    `<div>Max ${Math.round(j.daily.temperature_2m_max[0])}° / Min ${Math.round(j.daily.temperature_2m_min[0])}°</div>`;
+  $('mainIcon').innerHTML = icon(c.weather_code, day);
+  $('mainTemp').textContent = Math.round(c.temperature_2m) + '°';
+  $('mainDesc').textContent = desc(c.weather_code);
+  $('feels').textContent = Math.round(c.apparent_temperature) + '°';
+  $('hum').textContent = c.relative_humidity_2m + '%';
+  $('wind').textContent = Math.round(c.wind_speed_10m) + ' km/h ' + CARD[Math.round(c.wind_direction_10m / 45) % 8];
+  $('gust').textContent = Math.round(c.wind_gusts_10m) + ' km/h';
+  $('uv').textContent = Math.round(c.uv_index ?? 0);
+  $('press').textContent = Math.round(c.surface_pressure) + ' hPa';
 
   const h = j.hourly;
   let start = h.time.indexOf(c.time.slice(0, 13) + ':00');
   if (start < 0) start = 0;
-  const probs = h.precipitation_probability.slice(start, start + 6).map(p => p ?? 0);
-  $('bars').innerHTML = probs.map(p =>
-    `<div class="bar" style="height:${Math.max(4, p)}%" title="${p}%"></div>`).join('');
-  const maxP = Math.max(...probs);
-  $('rainTxt').textContent = maxP >= 50 ? `Pluie probable (jusqu'à ${maxP}%)` : `Pas de pluie notable (max ${maxP}%)`;
+  const next = h.precipitation_probability.slice(start, start + 2).map(p => p ?? 0);
+  const pMax = Math.max(...next);
+  $('rainNow').textContent = pMax >= 50 ? `Pluie probable dans l'heure (${pMax}%)` : "Pas de pluie prévue dans l'heure";
 
-  $('week').innerHTML = j.daily.time.map((t, i) => {
-    const d = new Date(t + 'T12:00');
-    return `<div class="day"><b>${DAYS[d.getDay()]}</b>${desc(j.daily.weather_code[i])}<br>` +
-      `${Math.round(j.daily.temperature_2m_max[i])}° / ${Math.round(j.daily.temperature_2m_min[i])}°<br>` +
-      `Pluie ${j.daily.precipitation_probability_max[i] ?? 0}%</div>`;
+  $('hours').innerHTML = h.time.slice(start, start + 16).map((t, i) => {
+    const k = start + i;
+    return `<div><div class="h">${t.slice(11, 13)}h</div>${icon(h.weather_code[k], Number(t.slice(11, 13)) >= 7 && Number(t.slice(11, 13)) < 18)}` +
+      `<div class="t">${Math.round(h.temperature_2m[k])}°</div><div class="p">${h.precipitation_probability[k] ?? 0}%</div></div>`;
   }).join('');
 
-  $('sun').textContent = `Lever ${j.daily.sunrise[0].slice(11, 16)} · Coucher ${j.daily.sunset[0].slice(11, 16)}`;
+  const d = j.daily;
+  $('days').innerHTML = d.time.map((t, i) => {
+    const dt = new Date(t + 'T12:00');
+    const label = i === 0 ? 'Auj.' : DAYS[dt.getDay()];
+    return `<div><div class="d">${label}</div><div>${t.slice(8, 10)}/${t.slice(5, 7)}</div>${icon(d.weather_code[i], true)}` +
+      `<div class="m">${Math.round(d.temperature_2m_max[i])}° <span style="opacity:.6">${Math.round(d.temperature_2m_min[i])}°</span></div>` +
+      `<div>${d.precipitation_probability_max[i] ?? 0}%</div></div>`;
+  }).join('');
+
+  $('sunrise').textContent = hhmm(d.sunrise[0]);
+  $('sunset').textContent = hhmm(d.sunset[0]);
+  const dur = Math.round(d.daylight_duration[0] / 60);
+  $('dayLen').textContent = Math.floor(dur / 60) + ' h ' + String(dur % 60).padStart(2, '0');
+
+  if (aq && aq.current) {
+    const a = aq.current;
+    const v = Math.round(a.european_aqi);
+    const [lab, col] = v <= 20 ? ['Très bon','#4ade80'] : v <= 40 ? ['Bon','#a3e635'] : v <= 60 ? ['Correct','#facc15'] : v <= 80 ? ['Moyen','#fb923c'] : v <= 100 ? ['Médiocre','#f87171'] : ['Mauvais','#c084fc'];
+    $('aqi').textContent = v;
+    $('aqi').style.color = col;
+    $('aqiLabel').textContent = lab;
+    $('aqiDetail').textContent = `PM2.5 ${Math.round(a.pm2_5)} · PM10 ${Math.round(a.pm10)} · O3 ${Math.round(a.ozone)} µg/m³`;
+  } else {
+    $('aqi').textContent = '--';
+    $('aqiLabel').textContent = 'Indisponible';
+    $('aqiDetail').textContent = '';
+  }
+}
+
+async function getJSON(url){
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
 }
 
 async function load(){
   $('status').textContent = 'Mise à jour…';
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${cfg.lat}&longitude=${cfg.lon}` +
-    `&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code` +
-    `&hourly=precipitation_probability&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset` +
-    `&timezone=auto&forecast_days=7&wind_speed_unit=kmh`;
+  const base = `latitude=${cfg.lat}&longitude=${cfg.lon}&timezone=auto`;
+  const fUrl = `https://api.open-meteo.com/v1/forecast?${base}` +
+    `&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code,surface_pressure,uv_index,is_day` +
+    `&hourly=temperature_2m,precipitation_probability,weather_code` +
+    `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset,daylight_duration` +
+    `&forecast_days=7&wind_speed_unit=kmh`;
+  const aUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?${base}&current=european_aqi,pm2_5,pm10,ozone`;
   try {
-    const r = await fetch(url);
-    if (!r.ok) throw new Error(r.status);
-    const j = await r.json();
-    render(j);
-    $('status').textContent = 'Mis à jour à ' + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
-    try { localStorage.setItem('jm_cache', JSON.stringify(j)); } catch(e) {}
+    const [j, aq] = await Promise.all([getJSON(fUrl), getJSON(aUrl).catch(() => null)]);
+    render(j, aq);
+    $('upd').textContent = 'Mis à jour à ' + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+    $('status').textContent = '● en ligne';
+    try { localStorage.setItem('jm_cache', JSON.stringify({j, aq})); } catch(e) {}
   } catch(e) {
     let cache = null;
     try { cache = JSON.parse(localStorage.getItem('jm_cache')); } catch(_) {}
-    if (cache) render(cache);
+    if (cache) render(cache.j, cache.aq);
     $('status').textContent = 'Hors ligne' + (cache ? ' (données anciennes)' : '');
   }
 }
@@ -167,8 +286,7 @@ async function search(){
   if (!q) return;
   $('results').textContent = 'Recherche…';
   try {
-    const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=fr&format=json`);
-    const j = await r.json();
+    const j = await getJSON(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=fr&format=json`);
     const res = j.results || [];
     $('results').innerHTML = '';
     if (!res.length) { $('results').textContent = 'Aucune ville trouvée.'; return; }
