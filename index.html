@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JARVIS Météo</title>
+<style>
+:root{--c:#27d7ff;--dim:#0b4a5e;}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:radial-gradient(circle at 50% 30%,#06263a,#02070d 70%);color:var(--c);font-family:"Segoe UI",Roboto,Arial,sans-serif;overflow:hidden}
+#app{display:flex;flex-direction:column;gap:10px;height:100%;padding:12px}
+#top{display:flex;gap:10px;flex:1;min-height:0}
+#top>.panel{flex:1;min-width:0}
+.panel{border:1px solid var(--dim);border-radius:8px;padding:10px 14px;background:rgba(2,20,30,.55);box-shadow:inset 0 0 18px rgba(39,215,255,.08)}
+.label{font-size:12px;letter-spacing:3px;opacity:.7;text-transform:uppercase}
+#clock{font-size:64px;font-weight:300;line-height:1}
+#date{font-size:16px;opacity:.8;margin-top:4px}
+#sun{font-size:15px;margin-top:10px}
+#now{display:flex;align-items:center;gap:16px;margin-top:6px}
+#temp{font-size:72px;font-weight:200;line-height:1}
+#desc{font-size:20px}
+#details{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;font-size:15px}
+#bars{display:flex;align-items:flex-end;gap:4px;height:56px;margin-top:6px}
+.bar{flex:1;background:linear-gradient(#27d7ff,#0b4a5e);min-height:3px;border-radius:2px}
+#rainTxt{font-size:14px;margin-top:4px}
+#week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.day{text-align:center;font-size:13px}
+.day b{display:block;font-size:13px;opacity:.85}
+#foot{display:flex;justify-content:space-between;align-items:center;font-size:12px;opacity:.6}
+#gear{background:none;border:1px solid var(--dim);color:var(--c);border-radius:6px;padding:4px 10px;cursor:pointer}
+#settings{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center}
+#settings.open{display:flex}
+#settings .panel{width:min(520px,92%)}
+input,button{font:inherit;background:#021c28;color:var(--c);border:1px solid var(--c);border-radius:6px;padding:8px 10px}
+button{cursor:pointer}
+.row{display:flex;gap:8px;margin:8px 0}
+.row input{flex:1;min-width:0}
+#results button{display:block;width:100%;text-align:left;margin:4px 0}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="top">
+    <div class="panel">
+      <div id="clock">--:--</div>
+      <div id="date"></div>
+      <div id="sun"></div>
+    </div>
+    <div class="panel">
+      <div class="label" id="city">Ville</div>
+      <div id="now">
+        <div id="temp">--°</div>
+        <div>
+          <div id="desc"></div>
+          <div id="details"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="label">Pluie dans les 6 prochaines heures</div>
+    <div id="bars"></div>
+    <div id="rainTxt"></div>
+  </div>
+  <div class="panel">
+    <div id="week"></div>
+  </div>
+  <div id="foot">
+    <span id="status"></span>
+    <button id="gear" title="Paramètres (touche P)">Paramètres</button>
+  </div>
+</div>
+
+<div id="settings">
+  <div class="panel">
+    <div class="label">Ville</div>
+    <div class="row">
+      <input id="cityIn" placeholder="Nom de la ville">
+      <button id="searchBtn">Rechercher</button>
+    </div>
+    <div id="results"></div>
+    <div class="row"><button id="closeBtn">Fermer</button></div>
+  </div>
+</div>
+
+<script>
+const DEF = {name:'Graulhet', lat:43.7667, lon:2.0};
+let cfg = DEF;
+try { cfg = JSON.parse(localStorage.getItem('jm')) || DEF; } catch(e) {}
+
+const $ = id => document.getElementById(id);
+const CODES = {0:'Ciel dégagé',1:'Peu nuageux',2:'Partiellement nuageux',3:'Couvert',45:'Brouillard',48:'Brouillard givrant',51:'Bruine faible',53:'Bruine',55:'Bruine forte',56:'Bruine verglaçante',57:'Bruine verglaçante forte',61:'Pluie faible',63:'Pluie',65:'Pluie forte',66:'Pluie verglaçante',67:'Pluie verglaçante forte',71:'Neige faible',73:'Neige',75:'Neige forte',77:'Grains de neige',80:'Averses faibles',81:'Averses',82:'Averses violentes',85:'Averses de neige',86:'Fortes averses de neige',95:'Orage',96:'Orage avec grêle',99:'Orage violent'};
+const desc = c => CODES[c] || 'Inconnu';
+const DAYS = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+
+function tick(){
+  const d = new Date();
+  $('clock').textContent = d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+  $('date').textContent = d.toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long'});
+}
+setInterval(tick, 1000); tick();
+
+function render(j){
+  const c = j.current;
+  $('city').textContent = cfg.name.toUpperCase();
+  $('temp').textContent = Math.round(c.temperature_2m) + '°';
+  $('desc').textContent = desc(c.weather_code);
+  $('details').innerHTML =
+    `<div>Ressenti ${Math.round(c.apparent_temperature)}°</div>` +
+    `<div>Humidité ${c.relative_humidity_2m}%</div>` +
+    `<div>Vent ${Math.round(c.wind_speed_10m)} km/h</div>` +
+    `<div>Max ${Math.round(j.daily.temperature_2m_max[0])}° / Min ${Math.round(j.daily.temperature_2m_min[0])}°</div>`;
+
+  const h = j.hourly;
+  let start = h.time.indexOf(c.time.slice(0, 13) + ':00');
+  if (start < 0) start = 0;
+  const probs = h.precipitation_probability.slice(start, start + 6).map(p => p ?? 0);
+  $('bars').innerHTML = probs.map(p =>
+    `<div class="bar" style="height:${Math.max(4, p)}%" title="${p}%"></div>`).join('');
+  const maxP = Math.max(...probs);
+  $('rainTxt').textContent = maxP >= 50 ? `Pluie probable (jusqu'à ${maxP}%)` : `Pas de pluie notable (max ${maxP}%)`;
+
+  $('week').innerHTML = j.daily.time.map((t, i) => {
+    const d = new Date(t + 'T12:00');
+    return `<div class="day"><b>${DAYS[d.getDay()]}</b>${desc(j.daily.weather_code[i])}<br>` +
+      `${Math.round(j.daily.temperature_2m_max[i])}° / ${Math.round(j.daily.temperature_2m_min[i])}°<br>` +
+      `Pluie ${j.daily.precipitation_probability_max[i] ?? 0}%</div>`;
+  }).join('');
+
+  $('sun').textContent = `Lever ${j.daily.sunrise[0].slice(11, 16)} · Coucher ${j.daily.sunset[0].slice(11, 16)}`;
+}
+
+async function load(){
+  $('status').textContent = 'Mise à jour…';
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${cfg.lat}&longitude=${cfg.lon}` +
+    `&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code` +
+    `&hourly=precipitation_probability&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset` +
+    `&timezone=auto&forecast_days=7&wind_speed_unit=kmh`;
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(r.status);
+    const j = await r.json();
+    render(j);
+    $('status').textContent = 'Mis à jour à ' + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+    try { localStorage.setItem('jm_cache', JSON.stringify(j)); } catch(e) {}
+  } catch(e) {
+    let cache = null;
+    try { cache = JSON.parse(localStorage.getItem('jm_cache')); } catch(_) {}
+    if (cache) render(cache);
+    $('status').textContent = 'Hors ligne' + (cache ? ' (données anciennes)' : '');
+  }
+}
+
+function openSet(){
+  $('settings').classList.add('open');
+  $('cityIn').value = cfg.name;
+  $('cityIn').focus();
+}
+function closeSet(){ $('settings').classList.remove('open'); }
+
+async function search(){
+  const q = $('cityIn').value.trim();
+  if (!q) return;
+  $('results').textContent = 'Recherche…';
+  try {
+    const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=fr&format=json`);
+    const j = await r.json();
+    const res = j.results || [];
+    $('results').innerHTML = '';
+    if (!res.length) { $('results').textContent = 'Aucune ville trouvée.'; return; }
+    res.forEach(p => {
+      const b = document.createElement('button');
+      b.textContent = `${p.name} (${p.admin1 || ''}, ${p.country || ''})`;
+      b.onclick = () => {
+        cfg = {name: p.name, lat: p.latitude, lon: p.longitude};
+        try { localStorage.setItem('jm', JSON.stringify(cfg)); } catch(e) {}
+        closeSet();
+        load();
+      };
+      $('results').appendChild(b);
+    });
+  } catch(e) {
+    $('results').textContent = 'Recherche impossible (pas de connexion ?)';
+  }
+}
+
+$('gear').onclick = openSet;
+$('searchBtn').onclick = search;
+$('closeBtn').onclick = closeSet;
+$('cityIn').addEventListener('keydown', e => { if (e.key === 'Enter') search(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeSet();
+  if ((e.key === 'p' || e.key === 'P') && e.target.tagName !== 'INPUT') openSet();
+});
+
+load();
+setInterval(load, 10 * 60 * 1000);
+</script>
+</body>
+</html>
